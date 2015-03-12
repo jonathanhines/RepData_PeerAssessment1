@@ -84,15 +84,19 @@ The total number of missing values in the data set is:
 sum(is.na(a$steps))
 ```
 
-To deal with the missing values, replace the median for that interval.
+To deal with the missing values, replace the median for that interval.  There
+is definitely a faster way to do this than with a for loop but this one works
+fine for now
 ```{r}
 median_steps_per_interval <- tapply(a$steps, a$interval, median, na.rm = TRUE)
 a_na_replace <- a
-a_na_replace$steps <- ifelse(
-    is.na(a$steps),
-    median_steps_per_interval[which(steps_intervals==a$interval)],
-    a$steps
-)
+for(i in 1:nrow(a_na_replace)) {
+    if(is.na(a_na_replace[i,"steps"])) {
+        a_na_replace[i,"steps"] <- median_steps_per_interval[
+            which(steps_intervals==a_na_replace[i,"interval"])
+        ]
+    }
+}
 ```
 
 Here is a histogram of the step data with the NAs replaced by the medians of
@@ -110,5 +114,38 @@ hist(
     xlab="Steps in a day"
 )
 ```
+It appears that adding in missing data has taken days that recorded the
+lowest number of steps and increased their values.  This makes sense considering
+that we are effectivly adding steps to intervals that did not previously 
+contribute to the number of steps in their respective day.
+
+The mean number of steps per day is found by:
+```{r}
+mean(steps_per_day_na_replace)
+```
+
+The median number of steps taken per day is found by:
+```{r}
+median(steps_per_day_na_replace)
+```
+
+As a reminder here is the mean and median values respectively, with the
+missing values counted as 0:
+```{r}
+mean(steps_per_day)
+median(steps_per_day)
+```
+
+It appears the the missing data on the estimates of total numbers of steps
+per day is minor or `r mean(steps_per_day_na_replace)/mean(steps_per_day)`% for
+the mean and `r median(steps_per_day_na_replace)/median(steps_per_day)`% for the
+median.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+Make a new column in the filled in dataset that identifies the date as a 
+weekday.
+
+```{r}
+a_weekdays <- weekdays(as.Date(a_na_replace$date))
+
+```

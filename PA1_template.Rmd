@@ -1,25 +1,114 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+output: html_document
+author: Jonathan Hines
+keep_md: true
 ---
-
+```{r echo=FALSE}
+## Download the data if not present
+# If the source isn't downloaded yet go get it and download it
+if (!file.exists("activity.csv")) {
+    rawDataSource = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip";
+    if( .Platform$OS.type == "windows" ) {
+        download.file(rawDataSource, destfile = "activity.zip", mode="wb")
+        unzip("activity.zip")
+        unlink("activity.zip")
+    } else {
+        download.file(rawDataSource, destfile = "activity.zip", method="curl")
+        unzip("activity.zip")
+        unlink("activity.zip")
+    }
+    write(date(), file="dateDownloaded.txt")
+    rm( rawDataSource )
+}
+```
 
 ## Loading and preprocessing the data
-
-
+```{r}
+a <- read.csv("activity.csv")
+```
 
 ## What is mean total number of steps taken per day?
+Generate a vector of the number of steps taken in each day in the data set
+```{r}
+steps_per_day <- tapply(a$steps, a$date, sum, na.rm = TRUE)
+```
 
+Here is a histogram of the number of steps taken on a given day
+```{r}
+hist(
+    steps_per_day,
+    main="Histogram of the number of steps taken in a day", 
+    xlab="Steps in a day"
+)
+```
 
+The mean number of steps per day is given by:
+```{r}
+mean(steps_per_day)
+```
+
+The median number of steps is given by:
+```{r}
+median(steps_per_day)
+```
 
 ## What is the average daily activity pattern?
+Generate a vector of the average number of steps split by interval
+```{r}
+mean_steps_per_interval <- tapply(a$steps, a$interval, mean, na.rm = TRUE)
+steps_intervals <- strtoi(attr(mean_steps_per_interval, "dimnames")[[1]])
+```
 
+Plot a time series 
+```{r}
+plot(
+    steps_intervals, 
+    mean_steps_per_interval, 
+    type="l", 
+    main="Average number of steps over a 5 minute interval", 
+    xlab="Interval", 
+    ylab="Mean number of steps per interval"
+)
+```
 
+The interval that contains the hightest number of steps on average can be
+determined by:
+```{r}
+steps_intervals[which.max(mean_steps_per_interval)]
+```
 
-## Imputing missing values
+## Inputing missing values
+The total number of missing values in the data set is:
+```{r}
+sum(is.na(a$steps))
+```
 
+To deal with the missing values, replace the median for that interval.
+```{r}
+median_steps_per_interval <- tapply(a$steps, a$interval, median, na.rm = TRUE)
+a_na_replace <- a
+a_na_replace$steps <- ifelse(
+    is.na(a$steps),
+    median_steps_per_interval[which(steps_intervals==a$interval)],
+    a$steps
+)
+```
 
+Here is a histogram of the step data with the NAs replaced by the medians of
+the corresponding interval.
+
+```{r}
+steps_per_day_na_replace <- tapply(
+    a_na_replace$steps,
+    a_na_replace$date,
+    sum
+)
+hist(
+    steps_per_day_na_replace,
+    main="Histogram of the number of steps taken in a day\nwith NA's replaced with medians", 
+    xlab="Steps in a day"
+)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?

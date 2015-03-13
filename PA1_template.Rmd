@@ -7,8 +7,11 @@ author: Jonathan Hines
 ```{r echo=FALSE}
 ## Download the data if not present
 # If the source isn't downloaded yet go get it and download it
+if (!file.exists("activity.zip")) {
+    unlink("activity.zip")
+}
 if (!file.exists("activity.csv")) {
-    rawDataSource = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip";
+    rawDataSource = "http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip";
     if( .Platform$OS.type == "windows" ) {
         download.file(rawDataSource, destfile = "activity.zip", mode="wb")
         unzip("activity.zip")
@@ -144,14 +147,73 @@ median.
 ## Are there differences in activity patterns between weekdays and weekends?
 Make a new column in the filled in dataset that identifies the date as a 
 weekday.
+```{r echo=FALSE}
+## Backup the viewing parameters
+op<-par()
 
+```
 ```{r}
 a_na_replace$day_class  <- as.factor(
     ifelse(
         weekdays(as.Date(a_na_replace$date)) %in% c( "Saturday", "Sunday" ),
-        "Weekend",
-        "Weekday"
+        "weekend",
+        "weekday"
     )
 )
+```
+Now that we have a factor notating weekend vs weekday do the following steps:
 
+1.  Split the data set into weekend and weekday sets
+
+2.  Get the interval means for each set
+
+3.  Plot the two new weekday and weekend interval means for comparison
+
+```{r fig.height=10}
+
+par(mfrow=c(2,1))
+a_na_replace_weekday <- subset(a_na_replace,a_na_replace$day_class == "weekday")
+mean_steps_per_interval_weekday <- tapply(
+    a_na_replace_weekday$steps, 
+    a_na_replace_weekday$interval,
+    mean
+)
+plot(
+    steps_intervals, 
+    mean_steps_per_interval_weekday, 
+    type="l", 
+    main="Weekday", 
+    xlab="Interval", 
+    ylab="Number of Steps",
+    ylim=c(0,225)
+)
+
+
+a_na_replace_weekend <- subset(a_na_replace,a_na_replace$day_class == "weekend")
+mean_steps_per_interval_weekend <- tapply(
+    a_na_replace_weekend$steps, 
+    a_na_replace_weekend$interval,
+    mean
+)
+plot(
+    steps_intervals, 
+    mean_steps_per_interval_weekend, 
+    type="l", 
+    main="Weekend", 
+    xlab="Interval", 
+    ylab="Number of Steps",
+    ylim=c(0,225)
+)
+
+```
+It appears that perhaps the subject likes to sleep in on the weekend as the number of steps
+rises in the morning later on the weekend.  It also appears that the subject goes to
+bed later on the weekend as activity is pushed later in the day on average.  The 
+largest source of walking activity on weekdays does not appear to be present
+on the weekend, as noted by the largest peak on the weekday plot that is missing
+on the weekend plot.  Finally, activity on the weeked appears to be more focused
+on one time on weekdays while it is spread across the day more evenly on the weekend.
+```{r echo=FALSE}
+## Restore the viewing parameters
+suppressWarnings(par(op))
 ```

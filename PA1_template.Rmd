@@ -1,8 +1,8 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
+keep_md: true
 output: html_document
 author: Jonathan Hines
-keep_md: true
 ---
 ```{r echo=FALSE}
 ## Download the data if not present

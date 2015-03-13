@@ -146,6 +146,12 @@ Make a new column in the filled in dataset that identifies the date as a
 weekday.
 
 ```{r}
-a_weekdays <- weekdays(as.Date(a_na_replace$date))
+a_na_replace$day_class  <- as.factor(
+    ifelse(
+        weekdays(as.Date(a_na_replace$date)) %in% c( "Saturday", "Sunday" ),
+        "Weekend",
+        "Weekday"
+    )
+)
 
 ```
